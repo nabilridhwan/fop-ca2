@@ -1,3 +1,5 @@
+// offering.js is a file that returns a variable of what the restaurant offers.
+
 var offering = [{
         name: 'Pizza (Slice)',
         items: [{
