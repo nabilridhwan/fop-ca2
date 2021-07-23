@@ -15,7 +15,9 @@ function printMainMenu() {
     // a do while loop where it breaks when the user option is 0
     do {
     // Asks the customer what is their name
-        customerName = input.question("What is your name? ")
+        if(!customerName){
+            customerName = input.question("What is your name? ")
+        }
         console.log("\n" + timeOfDayInWords() + ", " + customerName + "!" + "\n\nWelcome to NiceMeal Restaurant\nSelect an option below\n\t1. View Menu\n\t2. View Cart\n\t0. Quit")
         mainMenuOption = input.questionInt(">>>> ")
         // switch case for the main menu option
@@ -132,7 +134,7 @@ function getQuantity(categoryIndex, dishIndex, optionsArray, addToCartCallback) 
 }
 
 // Final step of the program: Adding it to cart and console.logs the item added.
-function addToCart(){
+function addToCart(categoryIndex, dishIndex, optionsArray, addToCartCallback){
     let itemAdded = cart.addItem(categoryIndex, dishIndex, optionsArray, itemQuantity)
     console.log(i_Content() + "Item added to your cart:")
     console.log(`${i_Content()} ${cart.returnCartLine(itemAdded)}`)

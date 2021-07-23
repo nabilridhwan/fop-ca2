@@ -10,7 +10,7 @@ class Cart {
     constructor() {
         this.cart = [];
     }
-    // Method to add item to the cart
+    // Method to add item to the cart, takes in the categoryIndex, itemIndex, option and quantity and pushes them to this.cart
     addItem(categoryIndex, itemIndex, option, quantity) {
         var item = offering[categoryIndex].items[itemIndex]
         var itemObj = {
