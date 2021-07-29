@@ -15,6 +15,7 @@ function printMainMenu() {
     // a do while loop where it breaks when the user option is 0
     do {
     // Asks the customer what is their name
+        // FIXME: It keeps asking the name, even though the name variable already exists
         if(!customerName){
             customerName = input.question("What is your name? ")
         }
