@@ -15,10 +15,14 @@ function printMainMenu() {
     // a do while loop where it breaks when the user option is 0
     do {
     // Asks the customer what is their name
-        // FIXME: It keeps asking the name, even though the name variable already exists
-        if(!customerName){
+
+        // A do while loop where it breaks when the customerName is empty.
+
+
+        while (customerName == "" || !customerName){
             customerName = input.question("What is your name? ")
         }
+        
         console.log("\n" + timeOfDayInWords() + ", " + customerName + "!" + "\n\nWelcome to NiceMeal Restaurant\nSelect an option below\n\t1. View Menu\n\t2. View Cart\n\t0. Quit")
         mainMenuOption = input.questionInt(">>>> ")
         // switch case for the main menu option
@@ -49,17 +53,34 @@ function printCategories(dishesCallback) {
     do {
 
         // Loops the array and Prints the category options
+
+        let validInputs = [];
         for (var i = 0; i < offering.length; i++) {
-            console.log(`${i_Content()}${i+1}. ${offering[i].name}`)
+            console.log(`${i_Content()}${i+1}. ${offering[i].name}`);
+            validInputs.push(i+1);
         }
 
-        // Console log extra line for return to previous menu
-        console.log(i_Content() + "0. Return to previous menu")
+        // Console log extra line for Return to Main Menu
+        console.log(i_Content() + "0. Return to Main Menu")
         categoryMenuOption = input.questionInt(">>>> ")
-        if (categoryMenuOption != 0) {
-            dishesCallback(categoryMenuOption - 1)
-        }
-        break;
+
+        // Switch on categoryMenuOption
+        switch (categoryMenuOption) {
+            case 0:
+                console.log("Exiting...")
+                break;
+            default:
+                if(validInputs.includes(categoryMenuOption)){
+                    // One of the valid options
+                    dishesCallback(categoryMenuOption - 1)
+                    categoryMenuOption = 0;
+                    break;
+
+                } else {
+                    printInvalidOption()
+                }
+                break;
+            }
     } while (categoryMenuOption !== 0)
 }
 
@@ -67,18 +88,35 @@ function printCategories(dishesCallback) {
 function printDishes(categoryIndex) {
     indentationLevel = 3
     let dishes = offering[categoryIndex].items
+    let validInputs = [];
+
     console.log("\n" + i_Headers() + "Select a dish")
     do {
         // Loops the array and print out the dishes
         for (var i = 0; i < dishes.length; i++) {
             console.log(`${i_Content()}${i+1}. ${dishes[i].name} - $${(dishes[i].price).toFixed(2)} ea`)
+            validInputs.push(i+1)
         }
-        console.log(i_Content() + "0. Return to previous menu")
+        console.log(i_Content() + "0. Return to Main Menu")
         dishesMenuOption = input.questionInt(">>>> ")
-        if (dishesMenuOption != 0) {
-            printOptions(categoryIndex, dishesMenuOption - 1)
-        }
-        break;
+
+        switch (dishesMenuOption) {
+            case 0:
+                console.log("Exiting...")
+                break;
+            default:
+                if(validInputs.includes(dishesMenuOption)){
+                    // One of the valid options
+                    printOptions(categoryIndex, dishesMenuOption - 1)
+                    dishesMenuOption = 0;
+                    break;
+
+                } else {
+                    printInvalidOption()
+                }
+
+                break;
+            }
     } while (dishesMenuOption !== 0)
 }
 
@@ -102,7 +140,7 @@ function printOptions(categoryIndex, dishIndex) {
             console.log(`${i_Content()}${i+1}. ${options[i]}`)
         }
         console.log(i_Content() + (options.length + 1) + ". Confirm Options Seletion")
-        console.log(i_Content() + "0. Return to previous menu")
+        console.log(i_Content() + "0. Return to Main Menu")
         dishesMenuOption = input.questionInt(">>>> ")
 
         // Confirm selection
@@ -135,7 +173,7 @@ function getQuantity(categoryIndex, dishIndex, optionsArray, addToCartCallback) 
 }
 
 // Final step of the program: Adding it to cart and console.logs the item added.
-function addToCart(categoryIndex, dishIndex, optionsArray, addToCartCallback){
+function addToCart(categoryIndex, dishIndex, optionsArray){
     let itemAdded = cart.addItem(categoryIndex, dishIndex, optionsArray, itemQuantity)
     console.log(i_Content() + "Item added to your cart:")
     console.log(`${i_Content()} ${cart.returnCartLine(itemAdded)}`)
@@ -160,7 +198,7 @@ function printMenuOptions() {
                 // When the user sends the order, the system asks if there is a discount code.
 
                 // Ask if user has a discount code, if so, apply it
-                console.log(i_Content() + "Enter the discount code (Enter 'none' if you have none, 0 to return to previous menu)")
+                console.log(i_Content() + "Enter the discount code (Enter 'none' if you have none, 0 to Return to Main Menu)")
                 let appliedDiscount;
                 // a do-while loop where it keeps asking for the discount unless the discount is VALID or 'none' is typed in (aka cart.ApplyDiscount returns false)
                 do {
@@ -191,7 +229,6 @@ function printMenuOptions() {
     } while (viewMenuOption !== 0)
 }
 
-// TODO: Implement printInvalidOption for invalid input
 // This functions print out when user selects an invalid option
 function printInvalidOption() {
     console.log("*** Invalid Option ***")
@@ -218,7 +255,7 @@ function timeOfDayInWords() {
     let hour = new Date().getHours()
     if (hour >= 0 && hour < 6) {
         return "Good Morning"
-    } else if (hour >= 6 && hour < 12) {
+    } else if (hour >= 6 && hour <= 15) {
         return "Good Afternoon"
     }
     return "Good Evening"

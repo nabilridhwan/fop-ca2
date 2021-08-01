@@ -41,10 +41,12 @@ class Cart {
     // Method to send order (which currently outputs the file to a text file)
     sendOrder() {
         // Randomly generated Order ID (For use with sendOrder method)
-        let orderId = Math.floor(Math.random() * 100000) + 1
+        let orderId = Math.floor(new Date())
         var totalCost = 0;
         var str = ""
         str += "Order Number: " + orderId + "\n"
+        str += "=====================================\n"
+        str += `Date Ordered: ${new Date()}\n`
         str += "=====================================\n"
         for (var i = 0; i < this.cart.length; i++) {
             var item = this.cart[i]
