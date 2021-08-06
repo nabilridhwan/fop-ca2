@@ -1,8 +1,28 @@
+/*
+    Name: Nabil Ridhwanshah Bin Rosli
+    Course & Class: DCITP/FT/1A/01
+    ID: 2007421
+
+    Advanced Features:
+    -   Discount Codes
+    -   Output of order to a text file
+    -   Allow changes to menu by adding item to one of the categories (Administrator access)
+    -   [COMING SOON!] Track the customer's order history and if the user comes in again, ask if they want to re-order their previous order
+*/
+
+
 const Cart = require("./OrderCart")
-const offering = require("./offering")
+const Offering = require("./offering")
 const input = require("readline-sync")
-var cart = new Cart()
-var customerName, mainMenuOption, categoryMenuOption, dishesMenuOption, itemQuantity, viewMenuOption;
+const timeOfDayInWords = require("./timeOfDay")
+// Secret password for admin control
+const SECRET_PASSWORD = require("./admin")
+var customerName, mainMenuOption, categoryMenuOption, dishesMenuOption, itemQuantity, viewMenuOption, inputPassword;
+
+let o = new Offering()
+let offering = o.menu
+
+var cart = new Cart(o)
 
 // This variable is used for the i_Headers and i_Content function
 var indentationLevel = 1;
@@ -14,16 +34,16 @@ function printMainMenu() {
     indentationLevel = 1
     // a do while loop where it breaks when the user option is 0
     do {
-    // Asks the customer what is their name
+        // Asks the customer what is their name
 
         // A do while loop where it breaks when the customerName is empty.
 
 
-        while (customerName == "" || !customerName){
+        while (customerName == "" || !customerName) {
             customerName = input.question("What is your name? ")
         }
-        
-        console.log("\n" + timeOfDayInWords() + ", " + customerName + "!" + "\n\nWelcome to NiceMeal Restaurant\nSelect an option below\n\t1. View Menu\n\t2. View Cart\n\t0. Quit")
+
+        console.log("\n" + timeOfDayInWords() + ", " + customerName + "!" + "\n\nWelcome to NiceMeal Restaurant\nSelect an option below\n\t1. View Menu\n\t2. View Cart\n\t3. Add Items (Administrator Only!)\n\t0. Quit")
         mainMenuOption = input.questionInt(">>>> ")
         // switch case for the main menu option
         // if it is 0, break the loop
@@ -34,6 +54,9 @@ function printMainMenu() {
             case 2:
                 // Prints the menu
                 printMenuOptions()
+                break;
+            case 3:
+                verifyAdmin()
                 break;
             default:
                 printInvalidOption()
@@ -57,7 +80,7 @@ function printCategories(dishesCallback) {
         let validInputs = [];
         for (var i = 0; i < offering.length; i++) {
             console.log(`${i_Content()}${i+1}. ${offering[i].name}`);
-            validInputs.push(i+1);
+            validInputs.push(i + 1);
         }
 
         // Console log extra line for Return to Main Menu
@@ -70,7 +93,7 @@ function printCategories(dishesCallback) {
                 console.log("Exiting...")
                 break;
             default:
-                if(validInputs.includes(categoryMenuOption)){
+                if (validInputs.includes(categoryMenuOption)) {
                     // One of the valid options
                     dishesCallback(categoryMenuOption - 1)
                     categoryMenuOption = 0;
@@ -80,7 +103,7 @@ function printCategories(dishesCallback) {
                     printInvalidOption()
                 }
                 break;
-            }
+        }
     } while (categoryMenuOption !== 0)
 }
 
@@ -95,7 +118,7 @@ function printDishes(categoryIndex) {
         // Loops the array and print out the dishes
         for (var i = 0; i < dishes.length; i++) {
             console.log(`${i_Content()}${i+1}. ${dishes[i].name} - $${(dishes[i].price).toFixed(2)} ea`)
-            validInputs.push(i+1)
+            validInputs.push(i + 1)
         }
         console.log(i_Content() + "0. Return to Main Menu")
         dishesMenuOption = input.questionInt(">>>> ")
@@ -105,7 +128,7 @@ function printDishes(categoryIndex) {
                 console.log("Exiting...")
                 break;
             default:
-                if(validInputs.includes(dishesMenuOption)){
+                if (validInputs.includes(dishesMenuOption)) {
                     // One of the valid options
                     printOptions(categoryIndex, dishesMenuOption - 1)
                     dishesMenuOption = 0;
@@ -116,7 +139,7 @@ function printDishes(categoryIndex) {
                 }
 
                 break;
-            }
+        }
     } while (dishesMenuOption !== 0)
 }
 
@@ -136,12 +159,18 @@ function printOptions(categoryIndex, dishIndex) {
             console.log(i_Content() + "Your current options for the dish are: " + cart.getNamedOptions(options, currentFoodOptions).join(", "))
             console.log(i_Content() + "=====================================")
         }
-        for (var i = 0; i < options.length; i++) {
-            console.log(`${i_Content()}${i+1}. ${options[i]}`)
+
+
+        if (options.length > 0) {
+            for (var i = 0; i < options.length; i++) {
+                console.log(`${i_Content()}${i+1}. ${options[i]}`)
+            }
+            console.log(i_Content() + (options.length + 1) + ". Confirm Options Seletion")
+            console.log(i_Content() + "0. Return to Main Menu")
+            dishesMenuOption = input.questionInt(">>>> ")
+        } else {
+            dishesMenuOption = options.length + 1;
         }
-        console.log(i_Content() + (options.length + 1) + ". Confirm Options Seletion")
-        console.log(i_Content() + "0. Return to Main Menu")
-        dishesMenuOption = input.questionInt(">>>> ")
 
         // Confirm selection
         if (dishesMenuOption == options.length + 1) {
@@ -169,11 +198,11 @@ function getQuantity(categoryIndex, dishIndex, optionsArray, addToCartCallback) 
     console.log(i_Headers() + "Enter the quantity:")
     itemQuantity = input.questionInt(">>>> ")
     addToCartCallback(categoryIndex, dishIndex, optionsArray, itemQuantity)
-    
+
 }
 
 // Final step of the program: Adding it to cart and console.logs the item added.
-function addToCart(categoryIndex, dishIndex, optionsArray){
+function addToCart(categoryIndex, dishIndex, optionsArray) {
     let itemAdded = cart.addItem(categoryIndex, dishIndex, optionsArray, itemQuantity)
     console.log(i_Content() + "Item added to your cart:")
     console.log(`${i_Content()} ${cart.returnCartLine(itemAdded)}`)
@@ -204,13 +233,13 @@ function printMenuOptions() {
                 do {
                     discountCode = input.question(">>>> ")
                     appliedDiscount = cart.applyDiscount(discountCode)
-                    if(discountCode == "0") {
+                    if (discountCode == "0") {
                         viewMenuOption = 0
                         break;
                     }
                 } while (appliedDiscount === false)
 
-                if(appliedDiscount == true){
+                if (appliedDiscount == true) {
                     cart.sendOrder()
                 }
                 viewMenuOption = 0
@@ -250,15 +279,95 @@ function i_Content() {
     return i_Headers() + "\t"
 }
 
-// A function that returns Good Morning, Good Afternoon, Good Evening based on the current time
-function timeOfDayInWords() {
-    let hour = new Date().getHours()
-    if (hour >= 0 && hour < 6) {
-        return "Good Morning"
-    } else if (hour >= 6 && hour <= 15) {
-        return "Good Afternoon"
+// Verifies if the user is an admin
+
+function verifyAdmin() {
+
+    // A do while loop while the input password is not equal to secret password
+    do {
+        console.log("Enter Administrator Password\nEnter 0 to exit this menu")
+        inputPassword = input.question(">>>> ")
+
+        if (inputPassword == "0") {
+            // Exit the program by breaking
+            console.log("Exiting to main menu...")
+            break;
+        }
+    } while (inputPassword != SECRET_PASSWORD)
+
+    if (inputPassword == SECRET_PASSWORD) {
+        printAddItem()
     }
-    return "Good Evening"
+}
+
+// Print the whole add item menu
+function printAddItem() {
+    // A do while loop while category option is not equal to 0
+    do {
+        // Print the menu
+        console.log("What category do you want to add an item to? ");
+        // Print the categories with index
+        o.categories.forEach((category, index) => {
+            console.log(index + 1 + ". " + category);
+        });
+
+        console.log("0. Exit Program")
+
+        addToCategoryOption = input.questionInt(">>>> ")
+
+        // Print new line!
+        console.log("\n")
+
+
+        // The following if statements check if the input is not 0 because to exit the program, the user would have to type in 0
+        if (addToCategoryOption != 0) {
+            console.log("\n");
+            // Ask for the name of the item
+            console.log("Enter the name of the item that you want to add:");
+            console.log("Enter 0 to exit")
+
+            nameOption = input.question(">>>> ");
+
+            // Print new line!
+            console.log("\n")
+
+            if (nameOption != "0") {
+                // Ask for the price of the item
+                console.log("Enter the price of " + nameOption + " (In dollars, without the dollar sign. e.g 2.5 or 2):");
+                console.log("Enter 0 to exit")
+
+                priceOption = input.questionFloat(">>>> ");
+
+                // Print new line!
+                console.log("\n")
+
+                if (priceOption != "0") {
+                    // Ask for the options of the item
+                    console.log("Enter the options for the dish (Separated by commas. e.g: extra spicy,more sauce):");
+                    console.log("Enter 0 to exit")
+
+                    dishOptions = input.question(">>>> ");
+
+                    // Print new line!
+                    console.log("\n")
+
+                    if (dishOptions != "0") {
+                        // Add the item to the menu
+                        o.addItemOnMenu(o.categories[addToCategoryOption - 1], nameOption, priceOption, dishOptions);
+
+                        // TODO: More detailed output!
+                        console.log("Item Added!")
+                    }
+                }
+
+            }
+        }
+
+
+        break;
+
+
+    } while (addToCategoryOption != 0);
 }
 
 // ************************************************

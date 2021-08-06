@@ -1,24 +1,26 @@
-const offering = require("./offering");
 const discount = require("./discounts")
 const fs = require("fs")
-
 
 // OrderCart is a class that handles the cart and the order
 class Cart {
 
     // The constructor is empty
-    constructor() {
+    constructor(o) {
         this.cart = [];
+
+        this.o = o;
+        this.offering = o.menu;
+
     }
     // Method to add item to the cart, takes in the categoryIndex, itemIndex, option and quantity and pushes them to this.cart
     addItem(categoryIndex, itemIndex, option, quantity) {
-        var item = offering[categoryIndex].items[itemIndex]
+        var item = this.offering[categoryIndex].items[itemIndex]
         var itemObj = {
             quantity: quantity,
             name: item.name,
             price: item.price,
             option: option,
-            category: offering[categoryIndex].name
+            category: this.offering[categoryIndex].name
         }
         this.cart.push(itemObj)
         return itemObj
@@ -156,7 +158,13 @@ class Cart {
 
     // This method returns the line of the cart item in a more cleaner way, this is so that the printing of the cart is consistent
     returnCartLine(item) {
-        return `${item.quantity}x ${item.name} ${item.category} (${item.option.join(", ")}) - $${(item.price * item.quantity).toFixed(2)}`
+        let option = "";
+
+        // If there is option for the food, then we print it, otherwise it will show up as empty ""
+        if(item.option.length > 0){
+            option = `(${item.option.join(", ")})`
+        }
+        return `${item.quantity}x ${item.name} ${item.category} ${option} - $${(item.price * item.quantity).toFixed(2)}`
     }
 }
 
