@@ -7,16 +7,16 @@
     -   Discount Codes
     -   Output of order to a text file
     -   Allow changes to menu by adding item to one of the categories (Administrator access)
-    -   [COMING SOON!] Track the customer's order history and if the user comes in again, ask if they want to re-order their previous order
+    -   Search Functionality
 */
 
 
-const Cart = require("./OrderCart")
-const Offering = require("./offering")
+const Cart = require("./lib/OrderCart")
+const Offering = require("./lib/offering")
 const input = require("readline-sync")
-const timeOfDayInWords = require("./timeOfDay")
+const timeOfDayInWords = require("./lib/timeOfDay")
 // Secret password for admin control
-const SECRET_PASSWORD = require("./admin")
+const SECRET_PASSWORD = require("./lib/admin")
 var customerName, mainMenuOption, categoryMenuOption, dishesMenuOption, itemQuantity, viewMenuOption, inputPassword;
 
 let o = new Offering()
@@ -43,13 +43,13 @@ function printMainMenu() {
             customerName = input.question("What is your name? ")
         }
 
-        console.log("\n" + timeOfDayInWords() + ", " + customerName + "!" + "\n\nWelcome to NiceMeal Restaurant\nSelect an option below\n\t1. View Menu\n\t2. View Cart\n\t3. Add Items (Administrator Only!)\n\t0. Quit")
+        console.log("\n" + timeOfDayInWords() + ", " + customerName + "!" + "\n\nWelcome to NiceMeal Restaurant\nSelect an option below\n\t1. View Menu\n\t2. View Cart\n\t3. Add Items (Administrator Only!)\n\t4. Search for Dish\n\t0. Quit")
         mainMenuOption = input.questionInt(">>>> ")
         // switch case for the main menu option
         // if it is 0, break the loop
         switch (mainMenuOption) {
             case 1:
-                printCategories(printDishes)
+                printCategories()
                 break
             case 2:
                 // Prints the menu
@@ -57,6 +57,10 @@ function printMainMenu() {
                 break;
             case 3:
                 verifyAdmin()
+                break;
+            case 4:
+                // Search function
+                searchItem()
                 break;
             default:
                 printInvalidOption()
@@ -68,7 +72,7 @@ function printMainMenu() {
 }
 
 // Print the categories which takes the printDishes as a callback
-function printCategories(dishesCallback) {
+function printCategories() {
 
     indentationLevel = 2
     console.log("\n" + i_Headers() + "Select a category")
@@ -95,7 +99,7 @@ function printCategories(dishesCallback) {
             default:
                 if (validInputs.includes(categoryMenuOption)) {
                     // One of the valid options
-                    dishesCallback(categoryMenuOption - 1)
+                    printDishes(categoryMenuOption - 1)
                     categoryMenuOption = 0;
                     break;
 
@@ -151,17 +155,17 @@ function printOptions(categoryIndex, dishIndex) {
 
     // A do while loop where it breaks when the user option is 0
     do {
-
-        // Prints out all the dish options
-        console.log("\n" + i_Headers() + "Select the dish's option(s). Enter " + (options.length + 1) + " to confirm options selections")
-        if (currentFoodOptions.length > 0) {
-            console.log(i_Content() + "=====================================")
-            console.log(i_Content() + "Your current options for the dish are: " + cart.getNamedOptions(options, currentFoodOptions).join(", "))
-            console.log(i_Content() + "=====================================")
-        }
-
-
+        // If the options array is not empty, print out the options - This means that the food has options
         if (options.length > 0) {
+
+            // Prints out all the dish options
+            console.log("\n" + i_Headers() + "Select the dish's option(s). Enter " + (options.length + 1) + " to confirm options selections")
+            if (currentFoodOptions.length > 0) {
+                console.log(i_Content() + "=====================================")
+                console.log(i_Content() + "Your current options for the dish are: " + cart.getNamedOptions(options, currentFoodOptions).join(", "))
+                console.log(i_Content() + "=====================================")
+            }
+
             for (var i = 0; i < options.length; i++) {
                 console.log(`${i_Content()}${i+1}. ${options[i]}`)
             }
@@ -169,13 +173,15 @@ function printOptions(categoryIndex, dishIndex) {
             console.log(i_Content() + "0. Return to Main Menu")
             dishesMenuOption = input.questionInt(">>>> ")
         } else {
+
+            console.log(i_Content() + "The food has no options!")
             dishesMenuOption = options.length + 1;
         }
 
         // Confirm selection
         if (dishesMenuOption == options.length + 1) {
             currentFoodOptions = cart.getNamedOptions(options, currentFoodOptions)
-            getQuantity(categoryIndex, dishIndex, currentFoodOptions, addToCart)
+            getQuantity(categoryIndex, dishIndex, currentFoodOptions)
             break;
         }
 
@@ -193,11 +199,11 @@ function printOptions(categoryIndex, dishIndex) {
 }
 
 // This function gets the total quantity of what the user wants and calls back the addToCartCallback function
-function getQuantity(categoryIndex, dishIndex, optionsArray, addToCartCallback) {
+function getQuantity(categoryIndex, dishIndex, optionsArray) {
     indentationLevel = 5
     console.log(i_Headers() + "Enter the quantity:")
     itemQuantity = input.questionInt(">>>> ")
-    addToCartCallback(categoryIndex, dishIndex, optionsArray, itemQuantity)
+    addToCart(categoryIndex, dishIndex, optionsArray, itemQuantity)
 
 }
 
@@ -260,7 +266,9 @@ function printMenuOptions() {
 
 // This functions print out when user selects an invalid option
 function printInvalidOption() {
+    console.log("**********************")
     console.log("*** Invalid Option ***")
+    console.log("**********************")
 }
 
 
@@ -295,6 +303,7 @@ function verifyAdmin() {
         }
     } while (inputPassword != SECRET_PASSWORD)
 
+    // Verify the password
     if (inputPassword == SECRET_PASSWORD) {
         printAddItem()
     }
@@ -321,7 +330,6 @@ function printAddItem() {
 
         // The following if statements check if the input is not 0 because to exit the program, the user would have to type in 0
         if (addToCategoryOption != 0) {
-            console.log("\n");
             // Ask for the name of the item
             console.log("Enter the name of the item that you want to add:");
             console.log("Enter 0 to exit")
@@ -332,6 +340,7 @@ function printAddItem() {
             console.log("\n")
 
             if (nameOption != "0") {
+
                 // Ask for the price of the item
                 console.log("Enter the price of " + nameOption + " (In dollars, without the dollar sign. e.g 2.5 or 2):");
                 console.log("Enter 0 to exit")
@@ -342,8 +351,10 @@ function printAddItem() {
                 console.log("\n")
 
                 if (priceOption != "0") {
+                    indentationLevel = 4;
+
                     // Ask for the options of the item
-                    console.log("Enter the options for the dish (Separated by commas. e.g: extra spicy,more sauce):");
+                    console.log("Enter the options for the dish (Separated by commas. e.g: extra spicy,more sauce. Click enter if no options are available for the dish):");
                     console.log("Enter 0 to exit")
 
                     dishOptions = input.question(">>>> ");
@@ -352,11 +363,12 @@ function printAddItem() {
                     console.log("\n")
 
                     if (dishOptions != "0") {
+                        indentationLevel = 5;
+
                         // Add the item to the menu
                         o.addItemOnMenu(o.categories[addToCategoryOption - 1], nameOption, priceOption, dishOptions);
-
-                        // TODO: More detailed output!
                         console.log("Item Added!")
+                        console.log("\n")
                     }
                 }
 
@@ -368,6 +380,35 @@ function printAddItem() {
 
 
     } while (addToCategoryOption != 0);
+}
+
+function searchItem() {
+
+    // Ask for search query
+
+    // Use searchForItem from o.js to search for the item
+    // If the item is found, print the item
+    // input.questionInt to add item to the cart
+
+    console.log("Enter the name of the item you want to search for:")
+    console.log("Enter 0 to exit")
+    searchQuery = input.question(">>>> ");
+    if (searchQuery != "0") {
+        console.log("\nSearching for " + searchQuery + "...")
+        let foundItems = o.searchForItem(searchQuery)
+
+        if (foundItems != false) {
+            // Traverse through searchQuery and print out the items
+            foundItems.forEach(function (dishes, index) {
+                console.log(`${i_Content()}${index+1}. ${dishes.name} - $${(dishes.price).toFixed(2)} ea `)
+            })
+            console.log(i_Content() + "Enter 0 to exit")
+            addToCart = input.questionInt(">>>> ")
+        } else {
+
+            console.log(i_Content() + "Item not found, Exiting to main menu.")
+        }
+    }
 }
 
 // ************************************************
