@@ -1,2 +1,3 @@
 order-*.txt
 node-modules*
+*vscode*
